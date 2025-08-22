@@ -23,17 +23,38 @@ app.MapGet("/getproduct", ([FromQuery] string dateStart, [FromQuery] string date
     return dateStart + " - " + dateEnd;
 });
 
-//api.app.com/user/{code}
-app.MapGet("/getproduct/{code}", ([FromRoute]string code) =>
-{
-    return code;
-});
 
 //parametro pelo body
 app.MapPost("/saveproduct", (Product product) =>
 {
-    return product.Code + " - " + product.Name;
+    //CRUD - C
+    ProductRepository.Add(product);
 });
+
+//api.app.com/user/{code}
+app.MapGet("/getproduct/{code}", ([FromRoute]string code) =>
+{
+    //CRUD - R
+    var product = ProductRepository.GetByCode(code);
+    return product;
+  
+});
+
+app.MapPut("/editproduct", (Product product) =>
+{
+    //CRUD - U
+    var productSaved = ProductRepository.GetByCode(product.Code);
+    productSaved.Name = product.Name;
+});
+
+app.MapDelete("/deleteproduct/{code}", ([FromRoute] string code) =>
+{
+    //CRUD - D
+    var product = ProductRepository.GetByCode(code);
+    ProductRepository.Remove(product);
+
+});
+
 
 //parametro pelo header
 app.MapGet("/getproductbyheader", (HttpRequest request) =>
@@ -48,4 +69,31 @@ public class Product
 {
     public string Code { get; set; }
     public string Name { get; set; }
+}
+
+//iniciando CRUD
+public static class ProductRepository
+{
+    public static List<Product> Products { get; set; }
+
+    public static void Add(Product product)
+    {
+        if (Products == null)
+        {
+            Products = new List<Product>();
+
+        }
+        Products.Add(product);
+    }
+
+
+    public static Product GetByCode(string code)
+    {
+        return Products.FirstOrDefault(p => p.Code == code);
+    }
+
+    public static void Remove(Product product)
+    {
+        Products.Remove(product);
+    }
 }
