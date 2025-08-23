@@ -3,32 +3,29 @@ using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
+var configuration = app.Configuration;
+ProductRepository.Init(configuration);
 
 
-//parametro pelo body
 app.MapPost("/products", (Product product) =>
 {
-    //CRUD - C
     ProductRepository.Add(product);
     return Results.Created("/products", product.Code);
 });
 
-//api.app.com/user/{code}
-app.MapGet("/products/{code}", ([FromRoute]string code) =>
+
+app.MapGet("/products/{code}", ([FromRoute] string code) =>
 {
-    //CRUD - R
     var product = ProductRepository.GetByCode(code);
     if (product != null)
     {
         return Results.Ok(product);
     }
     return Results.NotFound();
-  
 });
 
 app.MapPut("/products", (Product product) =>
 {
-    //CRUD - U
     var productSaved = ProductRepository.GetByCode(product.Code);
     productSaved.Name = product.Name;
     return Results.Ok();
@@ -36,11 +33,19 @@ app.MapPut("/products", (Product product) =>
 
 app.MapDelete("/products/{code}", ([FromRoute] string code) =>
 {
-    //CRUD - D
     var product = ProductRepository.GetByCode(code);
     ProductRepository.Remove(product);
     return Results.Ok();
 });
+
+if (app.Environment.IsStaging())
+{
+    app.MapGet("/configuration/database", (IConfiguration configuration) =>
+{
+    return Results.Ok(configuration["database:connection"]);
+});
+}
+
 
 
 app.Run();
@@ -55,6 +60,12 @@ public class Product
 public static class ProductRepository
 {
     public static List<Product> Products { get; set; }
+
+    public static void Init(IConfiguration configuration)
+    {
+        var product = configuration.GetSection("Products").Get<List<Product>>();
+        Products = product;
+    }
 
     public static void Add(Product product)
     {
