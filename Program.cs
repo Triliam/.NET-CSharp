@@ -1,7 +1,10 @@
 //cria a aplicação web - hosting - escuta o que é que o user quer acessar
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<ApplicationDbContext>();
+
 var app = builder.Build();
 var configuration = app.Configuration;
 ProductRepository.Init(configuration);
@@ -52,8 +55,18 @@ app.Run();
 
 public class Product
 {
+    public int Id { get; set; }
     public string Code { get; set; }
     public string Name { get; set; }
+}
+
+//classe que funciona como serviço e configura para classes que são tabelas no banco de dados
+public class ApplicationDbContext : DbContext
+{
+    public DbSet<Product> Products { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder.UseSqlServer("Server=localhost;Database=Products;User Id=sa;Password=@Sql2019;MultipleActiveResultSets=true;Encrypt=YES;TrustServerCertificate=YES");
+
 }
 
 //iniciando CRUD
@@ -76,7 +89,6 @@ public static class ProductRepository
         }
         Products.Add(product);
     }
-
 
     public static Product GetByCode(string code)
     {
