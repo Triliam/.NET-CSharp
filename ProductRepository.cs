@@ -1,4 +1,4 @@
-//cria a aplicação web - hosting - escuta o que é que o user quer acessar
+
 //iniciando CRUD
 public static class ProductRepository
 {
