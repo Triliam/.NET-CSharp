@@ -1,9 +1,8 @@
 //cria a aplicação web - hosting - escuta o que é que o user quer acessar
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<ApplicationDbContext>();
+builder.Services.AddSqlServer<ApplicationDbContext>(builder.Configuration["Database:SqlServer"]);
 
 var app = builder.Build();
 var configuration = app.Configuration;
@@ -52,78 +51,3 @@ if (app.Environment.IsStaging())
 
 
 app.Run();
-
-public class Category
-{
-    public int Id { get; set; }
-    public string Name { get; set; }
-}
-
-public class Tag
-{
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public int ProductId { get; set; }
-}
-
-public class Product
-{
-
-    public Category category { get; set; }
-
-    public int CategoryId { get; set; }
-
-    public List<Tag> Tags { get; set; }
-
-    public int Id { get; set; }
-    public string Code { get; set; }
-    public string Name { get; set; }
-}
-
-//classe que funciona como serviço e configura para classes que são tabelas no banco de dados
-public class ApplicationDbContext : DbContext
-{
-    public DbSet<Product> Products { get; set; }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Product>().Property(p => p.Name).HasMaxLength(120).IsRequired();
-
-        modelBuilder.Entity<Product>().Property(p => p.Code).HasMaxLength(20).IsRequired();
-    }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) => optionsBuilder.UseSqlServer("Server=localhost;Database=Products;User Id=sa;Password=@Sql2019;MultipleActiveResultSets=true;Encrypt=YES;TrustServerCertificate=YES");
-
-}
-
-//iniciando CRUD
-public static class ProductRepository
-{
-    public static List<Product> Products { get; set; }
-
-    public static void Init(IConfiguration configuration)
-    {
-        var product = configuration.GetSection("Products").Get<List<Product>>();
-        Products = product;
-    }
-
-    public static void Add(Product product)
-    {
-        if (Products == null)
-        {
-            Products = new List<Product>();
-
-        }
-        Products.Add(product);
-    }
-
-    public static Product GetByCode(string code)
-    {
-        return Products.FirstOrDefault(p => p.Code == code);
-    }
-
-    public static void Remove(Product product)
-    {
-        Products.Remove(product);
-    }
-}
